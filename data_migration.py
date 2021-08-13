@@ -27,7 +27,7 @@ class DataMigration:
     -o/--overwrite : allow import to overwrite existing documents/collections
     -u/--datastore : datastore (firestore [default] or redis)
 
-    TODO: improve redis import, json vs dict for import
+    TODO: deal with formatting of nested dictionary, deal with hset() redis-py issue
 
     NOTE: redis-py currently has a bug with hset(), where a dict cannot be successfully passed. Until this issue is fixed,
     the encode() method in connections.py must be updated with this conditional:
@@ -174,6 +174,7 @@ class DataMigration:
         # Different actions based on redis data type
         if isinstance(file_data, dict):  # Hash
             if self.documents is None or len(self.documents) == 0:
+                # redis 3.5.1: error using hset() to push dict to hash
                 try:
                     self.r.hset(collection_name, mapping=file_data)
                 except DataError:
@@ -183,6 +184,7 @@ class DataMigration:
                 for doc in file_data.keys():
                     if doc in self.documents:
                         doc_data[doc] = file_data[doc]
+                # redis 3.5.1: error using hset() to push dict to hash
                 try:
                     self.r.hset(collection_name, mapping=doc_data)
                 except DataError:
