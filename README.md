@@ -40,6 +40,8 @@ There are 2 files that can be run from the command line:
 
  -d/--documents [optional] :
  - specific document(s) to import/export
+ - Documents are NOT collection-specific!
+   - i.e. specifying a document will cause the script to look for that document in each collection being imported/exported
 
  -i/--import_db :
  - import only mode

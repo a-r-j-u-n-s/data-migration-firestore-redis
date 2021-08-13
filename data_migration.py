@@ -27,7 +27,12 @@ class DataMigration:
     -o/--overwrite : allow import to overwrite existing documents/collections
     -u/--datastore : datastore (firestore [default] or redis)
 
-    TODO: deal with formatting of nested dictionary, deal with hset() redis-py issue
+    TODO:
+        - Update credentials when switching GCP projects
+        - Formatting of nested data structures
+        - get collections by prefix
+        - Improve redis type-handling
+        - deal with hset() redis-py issue
 
     NOTE: redis-py currently has a bug with hset(), where a dict cannot be successfully passed. Until this issue is fixed,
     the encode() method in connections.py must be updated with this conditional:
@@ -37,7 +42,7 @@ class DataMigration:
     @author Arjun Srivastava
     """
 
-    def __init__(self, cred: credentials.Certificate):
+    def __init__(self, cred: credentials.Certificate = None):
         self.parser = argparse.ArgumentParser(prog='data_migration',
                                               description='Import/export data between datastores (Firestore, redis')
         self._setup_parser()
@@ -51,15 +56,17 @@ class DataMigration:
         self._set_args()
 
         if self.datastore == 'firestore':
-            firebase_admin.initialize_app(self.cred)
+            if credentials:
+                firebase_admin.initialize_app(self.cred)
 
             # Initialize client
             self.db = firestore.client()
 
         elif self.datastore == 'redis':
-            # redis_host = input('Please enter the redis host address: ').strip()
-            self.r = redis.Redis(host='10.19.3.36', decode_responses=True)
-            # self.r = redis.Redis(host='10.0.81.108', decode_responses=True)
+            redis_host = input('Please enter the redis host address: ').strip()
+            self.r = redis.Redis(host=redis_host, decode_responses=True)
+            # For hardcoding address
+            # self.r = redis.Redis(host='', decode_responses=True)
         else:
             print('Please enter a valid datastore for the script to use (firestore or redis)')
             sys.exit(1)
@@ -118,7 +125,16 @@ class DataMigration:
         if self.datastore == 'firestore':
             self._do_firestore_import(collection, col, file_data)
         elif self.datastore == 'redis':
-            self._do_redis_import(collection, col, file_data)
+            if self.r.exists(collection):
+                if self.args.overwrite:
+                    print(f'Overwriting existing key: {collection}')
+                    self._do_redis_import(collection, file_data)
+                else:
+                    print(f'Cannot overwrite existing key: {collection}. Please run again with -o flag to '
+                          f'overwrite')
+            else:
+                self._do_redis_import(collection, file_data)
+
 
     def _do_collections_export(self, collection: str):
         print(f'Exporting collection: {collection}')
@@ -170,7 +186,7 @@ class DataMigration:
 
             break
 
-    def _do_redis_import(self, collection_name: str, col, file_data):
+    def _do_redis_import(self, collection_name: str, file_data):
         # Different actions based on redis data type
         if isinstance(file_data, dict):  # Hash
             if self.documents is None or len(self.documents) == 0:
@@ -291,5 +307,5 @@ class DataMigration:
 
 if __name__ == '__main__':
     # Path to credentials
-    key = credentials.Certificate("credentials.json")
+    key = credentials.Certificate("stg_credentials.json")
     tool = DataMigration(key)
