@@ -28,11 +28,11 @@ class DataMigration:
     -u/--datastore : datastore (firestore [default] or redis)
 
     TODO:
-        - Update credentials when switching GCP projects
-        - Formatting of nested data structures
+        - Update credentials when switching GCP projects (firestore)
+        - Dealing with nested data types aside from ints and strings (firestore)
         - get collections by prefix
-        - Improve redis type-handling
-        - deal with hset() redis-py issue
+        - Improve type-handling (redis)
+        - deal with hset() redis-py issue (redis)
 
     NOTE: redis-py currently has a bug with hset(), where a dict cannot be successfully passed. Until this issue is fixed,
     the encode() method in connections.py must be updated with this conditional:
@@ -306,6 +306,7 @@ class DataMigration:
 
 
 if __name__ == '__main__':
-    # Path to credentials
-    key = credentials.Certificate("stg_credentials.json")
+    # Path to credentials (if applicable)
+    cred = "credentials.json"
+    key = credentials.Certificate(cred)
     tool = DataMigration(key)
