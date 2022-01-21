@@ -1,6 +1,6 @@
 # Data Migration CLI
 
-Guide to using the standalone *data_migration* bash/python CLI. This script is intended to be used for GCP (Cloud Firebase) or redis.
+Guide to using the standalone *data_migration* bash/python CLI. This script is intended to be used with GCP (Cloud Firebase) and redis.
 ### Features
 - Data migration between GCP Firestore environments without using buckets
 - Type-aware redis export/import
